@@ -1,0 +1,20 @@
+services:
+  - type: worker
+    name: crypto-channel-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: CHANNEL_ID
+        sync: false
+      - key: MORNING_HOUR
+        value: 9
+      - key: EVENING_HOUR
+        value: 20
+      - key: DIGEST_HOUR
+        value: 22
+      - key: TIMEZONE
+        value: Europe/Moscow
