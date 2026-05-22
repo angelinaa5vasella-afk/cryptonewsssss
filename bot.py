@@ -4,6 +4,7 @@ import json
 import logging
 from datetime import datetime, date
 from pathlib import Path
+from aiohttp import web
 
 import aiohttp
 import feedparser
@@ -397,7 +398,20 @@ async def main():
         await post_digest(bot)
         return
 
-    log.info("Бот работает. Ctrl+C для остановки.")
+    # HTTP-сервер для Render (free tier требует web service)
+    port = int(os.getenv("PORT", "10000"))
+
+    async def health(request):
+        return web.Response(text="OK")
+
+    app = web.Application()
+    app.router.add_get("/", health)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+    log.info(f"Бот работает. Health check на порту {port}. Ctrl+C для остановки.")
     while True:
         await asyncio.sleep(60)
 
