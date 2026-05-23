@@ -78,16 +78,26 @@ def save_digest(articles: list):
 
 # ---------- Prices ----------
 
+BINANCE_SYMBOLS = {
+    "bitcoin": ("BTC", "BTCUSDT"),
+    "ethereum": ("ETH", "ETHUSDT"),
+    "solana": ("SOL", "SOLUSDT"),
+}
+
 async def get_prices() -> dict:
-    ids = ",".join(COINS.keys())
-    url = (
-        "https://api.coingecko.com/api/v3/simple/price"
-        f"?ids={ids}&vs_currencies=usd&include_24hr_change=true"
-    )
+    symbol_map = {v[1]: k for k, v in BINANCE_SYMBOLS.items()}
+    result = {}
     async with aiohttp.ClientSession() as s:
-        async with s.get(url, timeout=aiohttp.ClientTimeout(total=15)) as r:
-            r.raise_for_status()
-            return await r.json()
+        for coin_id, (_, symbol) in BINANCE_SYMBOLS.items():
+            url = f"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}"
+            async with s.get(url, timeout=aiohttp.ClientTimeout(total=15)) as r:
+                r.raise_for_status()
+                item = await r.json()
+                result[coin_id] = {
+                    "usd": float(item["lastPrice"]),
+                    "usd_24h_change": float(item["priceChangePercent"]),
+                }
+    return result
 
 
 async def get_fear_greed() -> dict:
